@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map with Bootstrap Modal</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        #map {
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <!-- Bootstrap Modal -->
+    <div class="modal fade" id="flightModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Flight Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modalContent">
+                    <!-- Flight details will be dynamically inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Map Initialization
+        const map = L.map('map');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        // Flight Data
+        const locations = [
+            {
+                city: `
+                    <div>
+                        <h4>
+                            Seattle
+                            <img src="https://raw.githubusercontent.com/lipis/flag-icons/refs/heads/main/flags/1x1/us.svg" alt="United States Flag" style="margin-left: 8px; width: 32px; height: 32px;">
+                        </h4>
+                    </div>
+                `,
+                lat: 47.6062,
+                lon: -122.3321,
+                details: `
+                    <div>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Leaving to Taipei
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Delta</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">DL0069</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">JQWREQ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">1/30/25 3:41 PM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">1/31/25 9:05 PM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <hr>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(-90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Returning from Taipei
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Delta</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">DL0068</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">JQWREQ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/17/25 10:45 AM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/17/25 6:05 AM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `
+            },
+            {
+                city: `
+                    <h4>
+                        Taipei
+                        <img src="https://raw.githubusercontent.com/lipis/flag-icons/refs/heads/main/flags/1x1/tw.svg" alt="Taiwan Flag" style="margin-left: 8px; width: 32px; height: 32px;">
+                    </h4>
+                    <h6>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                        </svg>
+                        Arriving from Seattle → 1/31/25 @ 9:05 PM 
+                    </h6>
+                `,
+                lat: 25.0330,
+                lon: 121.5654,
+                details: `
+                    <div>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Leaving to Hong Kong
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Delta</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">DL0069</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">JQWREQ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/3/25 8:20 AM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/3/25 10:30 AM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <hr>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(-90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Returning to Seattle via Bangkok
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Cathay Pacific</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">CX407</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">6NBUFY</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/3/25 8:20 AM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/3/25 10:30 AM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `
+            },
+            {
+                city: `
+                    <h4>
+                        Hong Kong
+                        <img src="https://raw.githubusercontent.com/lipis/flag-icons/refs/heads/main/flags/1x1/hk.svg" alt="Hong Kong Flag" style="margin-left: 8px; width: 32px; height: 32px;">
+                    </h4>
+                    <h6>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                        </svg>
+                        Arriving from Taipei → 2/3/25 @ 10:30 AM 
+                    </h6>
+                `,
+                lat: 22.3193,
+                lon: 114.1694,
+                details: `
+                    <div>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Leaving to Kuala Lumpur
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Cathay Pacific</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">CX725</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">6NBUFY</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/5/25 12:45 PM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/5/25 4:50 PM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `
+            },
+            {
+                city: `
+                    <h4>
+                        Kuala Lumpur
+                        <img src="https://raw.githubusercontent.com/lipis/flag-icons/refs/heads/main/flags/1x1/my.svg" alt="Malaysia Flag" style="margin-left: 8px; width: 32px; height: 32px;">
+                    </h4>
+                    <h6>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                        </svg>
+                        Arriving from Hong Kong → 2/5/25 @ 4:50 PM 
+                    </h6>
+                `,
+                lat: 3.1390,
+                lon: 101.6869,
+                details: `
+                    <div>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Leaving to Phuket
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Air Asia</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">AK 820</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">K9KBRZ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/8/25 7:35 PM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/8/25 8:10 PM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `
+            },
+            {
+                city: `
+                    <h4>
+                        Phuket
+                        <img src="https://raw.githubusercontent.com/lipis/flag-icons/refs/heads/main/flags/1x1/th.svg" alt="Thailand Flag" style="margin-left: 8px; width: 32px; height: 32px;">
+                    </h4>
+                    <h6>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                        </svg>
+                        Arriving from Kuala Lumpur → 2/8/25 @ 8:10 PM 
+                    </h6>
+                `,
+                lat: 7.8804,
+                lon: 98.3923,
+                details: `
+                    <div>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Leaving to Bangkok
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Thai Vietjet</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">VZ301</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">3JY3VP</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/12/25 10:20 AM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/12/25 11:50 AM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `
+            },
+            {
+                city: `
+                    <h4>
+                        Bangkok
+                        <img src="https://raw.githubusercontent.com/lipis/flag-icons/refs/heads/main/flags/1x1/th.svg" alt="Thailand Flag" style="margin-left: 8px; width: 32px; height: 32px;">
+                    </h4>
+                    <h6>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                        </svg>
+                        Arriving from Taipei → 2/12/25 @ 11:50 AM 
+                    </h6>
+                `,
+                lat: 13.7563,
+                lon: 100.5018,
+                details: `
+                    <div>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Leaving to Udon Thani
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Thai Vietjet</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">VZ204</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">X8XS8U</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/14/25 1:15 PM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/14/25 2:25 PM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <hr>
+                    <div>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Returning to Seattle via Taipei
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Thai Airways</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">TG634</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">57AS68</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/16/25 12:50 PM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/16/25 5:20 PM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `
+            },
+            {
+                city: `
+                    <h4>
+                        Udon Thani
+                        <img src="https://raw.githubusercontent.com/lipis/flag-icons/refs/heads/main/flags/1x1/th.svg" alt="Thailand Flag" style="margin-left: 8px; width: 32px; height: 32px;">
+                    </h4>
+                    <h6>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-clock" viewBox="0 0 16 16">
+                            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
+                            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
+                        </svg>
+                        Arriving from Bangkok → 2/14/25 @ 2:25 PM 
+                    </h6>
+                `,
+                lat: 17.4075,
+                lon: 102.7936,
+                details: `
+                    <div>
+                        <h4>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-airplane" viewBox="0 0 16 16" transform="rotate(90)">
+                                <path d="M6.428 1.151C6.708.591 7.213 0 8 0s1.292.592 1.572 1.151C9.861 1.73 10 2.431 10 3v3.691l5.17 2.585a1.5 1.5 0 0 1 .83 1.342V12a.5.5 0 0 1-.582.493l-5.507-.918-.375 2.253 1.318 1.318A.5.5 0 0 1 10.5 16h-5a.5.5 0 0 1-.354-.854l1.319-1.318-.376-2.253-5.507.918A.5.5 0 0 1 0 12v-1.382a1.5 1.5 0 0 1 .83-1.342L6 6.691V3c0-.568.14-1.271.428-1.849m.894.448C7.111 2.02 7 2.569 7 3v4a.5.5 0 0 1-.276.447l-5.448 2.724a.5.5 0 0 0-.276.447v.792l5.418-.903a.5.5 0 0 1 .575.41l.5 3a.5.5 0 0 1-.14.437L6.708 15h2.586l-.647-.646a.5.5 0 0 1-.14-.436l.5-3a.5.5 0 0 1 .576-.411L15 11.41v-.792a.5.5 0 0 0-.276-.447L9.276 7.447A.5.5 0 0 1 9 7V3c0-.432-.11-.979-.322-1.401C8.458 1.159 8.213 1 8 1s-.458.158-.678.599"/>
+                            </svg>
+                            Returning to Seattle via Bangkok and Taipei
+                        </h4>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-info-circle" viewBox="0 0 16 16">
+                                <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/>
+                                <path d="m8.93 6.588-2.29.287-.082.38.45.083c.294.07.352.176.288.469l-.738 3.468c-.194.897.105 1.319.808 1.319.545 0 1.178-.252 1.465-.598l.088-.416c-.2.176-.492.246-.686.246-.275 0-.375-.193-.304-.533zM9 4.5a1 1 0 1 1-2 0 1 1 0 0 1 2 0"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px;"><b>Carrier</b></td>
+                                <td style="padding: 8px;">Thai Airways</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Flight</b></td>
+                                <td style="padding: 8px;">TG3</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px;"><b>Code</b></td>
+                                <td style="padding: 8px;">57DOCB</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <br>
+                        <h4 style="text-align: center; display: flex; align-items: center; justify-content: center;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-calendar-event" viewBox="0 0 16 16">
+                                <path d="M11 6.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5z"/>
+                                <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5M1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4z"/>
+                            </svg>
+                        </h4>
+                        <table border = "1" style="width: 80%; margin: 0 auto; text-align: center; border-collapse: collapse;">
+                            <tbody>
+                                <tr>
+                                <td style="padding: 8px"><b>Departing</b></td>
+                                <td style="padding: 8px">2/16/25 8:15 AM</td>
+                                </tr>
+                                <tr>
+                                <td style="padding: 8px"><b>Arriving</b></td>
+                                <td style="padding: 8px">2/16/25 9:35 AM</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `
+            }
+        ];
+
+        // Add Markers
+        locations.forEach(location => {
+            const marker = L.marker([location.lat, location.lon]).addTo(map);
+            marker.on('click', () => {
+                openModal(location.city, location.details);
+            });
+        });
+
+        // Fit map to all markers
+        const bounds = L.latLngBounds(locations.map(location => [location.lat, location.lon]));
+        map.fitBounds(bounds);
+
+        // Open Bootstrap Modal
+        function openModal(title, content) {
+            document.getElementById('modalTitle').innerHTML = title;
+            document.getElementById('modalContent').innerHTML = content; // Set innerHTML to allow rich content
+            const modal = new bootstrap.Modal(document.getElementById('flightModal'));
+            modal.show();
+        }
+    </script>
+</body>
+</html>
